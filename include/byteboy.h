@@ -31,14 +31,14 @@
 
 typedef enum {
     BB_OP_ADD_A_B   = 0x80, // 128
-	BB_OP_ADD_A_C   = 0x81, // 129
-	BB_OP_ADD_A_D   = 0x82, // 130
-	BB_OP_ADD_A_E   = 0x83, // 131
-	BB_OP_ADD_A_H   = 0x84, // 132
-	BB_OP_ADD_A_L   = 0x85, // 133
-	BB_OP_ADD_A_HL  = 0x86, // 134
+    BB_OP_ADD_A_C   = 0x81, // 129
+    BB_OP_ADD_A_D   = 0x82, // 130
+    BB_OP_ADD_A_E   = 0x83, // 131
+    BB_OP_ADD_A_H   = 0x84, // 132
+    BB_OP_ADD_A_L   = 0x85, // 133
+    BB_OP_ADD_A_HL  = 0x86, // 134
     BB_OP_ADD_A_A   = 0x87, // 135
-	BB_OP_ADD_A_N   = 0xC6, // 198
+    BB_OP_ADD_A_N   = 0xC6, // 198
 
     BB_OP_ADC_A_B   = 0x88,
     BB_OP_ADC_A_C   = 0x89,
@@ -49,6 +49,16 @@ typedef enum {
     BB_OP_ADC_A_HL  = 0x8E,
     BB_OP_ADC_A_A   = 0x8F,
     BB_OP_ADC_A_N   = 0xCE,
+
+    BB_OP_AND_A_B   = 0xA0,
+    BB_OP_AND_A_C   = 0xA1,
+    BB_OP_AND_A_D   = 0xA2,
+    BB_OP_AND_A_E   = 0xA3,
+    BB_OP_AND_A_H   = 0xA4,
+    BB_OP_AND_A_L   = 0xA5,
+    BB_OP_AND_A_HL  = 0xA6,
+    BB_OP_AND_A_A   = 0xA7,
+    BB_OP_AND_A_N   = 0xE6,
 
     BB_OP_HALT      = 0x76,
 
