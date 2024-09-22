@@ -94,6 +94,44 @@ static inline void bb_and(bb_state_t* bb, uint8_t a, uint8_t b)
     bb->reg.f &= ~BB_SUBTRACT_FLAG;
 }
 
+static inline void bb_daa(bb_state_t* bb)
+{
+    uint8_t correction = 0;
+
+    // Check if the previous operation was a subtraction
+    if (!(bb->reg.f & BB_SUBTRACT_FLAG)) // BB_SUBTRACT_FLAG == 0 means addition
+    {
+        if ((bb->reg.f & BB_CARRY_FLAG) || bb->reg.a > 0x99)
+        {
+            correction |= 0x60;
+            bb->reg.f |= BB_CARRY_FLAG;
+        }
+        if ((bb->reg.f & BB_HALF_CARRY_FLAG) || (bb->reg.a & 0x0F) > 0x09)
+        {
+            correction |= 0x06;
+        }
+    }
+    else
+    {
+        if (bb->reg.f & BB_CARRY_FLAG)
+        {
+            correction |= 0x60;
+        }
+        if (bb->reg.f & BB_HALF_CARRY_FLAG)
+        {
+            correction |= 0x06;
+        }
+    }
+
+    // Apply the correction
+    bb->reg.a += (bb->reg.f & BB_SUBTRACT_FLAG) ? -correction : correction;
+
+    // Set Zero flag if A is zero
+    bb->reg.f = (bb->reg.a == 0) ? (bb->reg.f | BB_ZERO_FLAG) : (bb->reg.f & ~BB_ZERO_FLAG);
+
+    bb->reg.f &= ~BB_HALF_CARRY_FLAG; // Half carry flag should be cleared
+}
+
 void bb_vm(bb_state_t* bb)
 {
     uint8_t* code = bb->rom;
@@ -300,6 +338,9 @@ void bb_vm(bb_state_t* bb)
         /* -- OTHER ------------------------------------------ */
         case BB_OP_CCF: /* FLIP CARRY BIT */
             bb->reg.f ^= BB_CARRY_FLAG;
+            break;
+        case BB_OP_DAA:
+            bb_daa(bb);
             break;
         case BB_OP_CPL:
             bb->reg.a = ~bb->reg.a;

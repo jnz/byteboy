@@ -89,6 +89,7 @@ typedef enum {
     BB_OP_CP_A_N    = 0xFE,
 
     BB_OP_CPL       = 0x2F,
+    BB_OP_DAA       = 0x27,
 
     BB_OP_HALT      = 0x76,
 
