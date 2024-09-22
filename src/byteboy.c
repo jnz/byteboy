@@ -301,6 +301,11 @@ void bb_vm(bb_state_t* bb)
         case BB_OP_CCF: /* FLIP CARRY BIT */
             bb->reg.f ^= BB_CARRY_FLAG;
             break;
+        case BB_OP_CPL:
+            bb->reg.a = ~bb->reg.a;
+            bb->reg.f |= BB_HALF_CARRY_FLAG;
+            bb->reg.f |= BB_SUBTRACT_FLAG;
+            break;
         case BB_OP_HALT:
             run = 0;
             break;
