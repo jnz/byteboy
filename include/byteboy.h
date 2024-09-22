@@ -21,20 +21,15 @@
  * DEFINES
  ******************************************************************************/
 
-#define BB_MAX_ROM_SIZE       0xFFFF /**< max. number of bytes for ASM
-                                           instructions */
-
-#define BB_MAX_RAM_SIZE        0xFFFF
-
 #define BB_MEM_MASK            0xFFFF
-
 
 /******************************************************************************
  * TYPEDEFS
  ******************************************************************************/
 
+/* Source: https://rgbds.gbdev.io/docs/v0.8.0/gbz80.7 */
+
 typedef enum {
-    BB_OP_ADD_A_A   = 0x87, // 135
     BB_OP_ADD_A_B   = 0x80, // 128
 	BB_OP_ADD_A_C   = 0x81, // 129
 	BB_OP_ADD_A_D   = 0x82, // 130
@@ -42,7 +37,21 @@ typedef enum {
 	BB_OP_ADD_A_H   = 0x84, // 132
 	BB_OP_ADD_A_L   = 0x85, // 133
 	BB_OP_ADD_A_HL  = 0x86, // 134
+    BB_OP_ADD_A_A   = 0x87, // 135
 	BB_OP_ADD_A_N   = 0xC6, // 198
+
+    BB_OP_ADC_A_B   = 0x88,
+    BB_OP_ADC_A_C   = 0x89,
+    BB_OP_ADC_A_D   = 0x8A,
+    BB_OP_ADC_A_E   = 0x8B,
+    BB_OP_ADC_A_H   = 0x8C,
+    BB_OP_ADC_A_L   = 0x8D,
+    BB_OP_ADC_A_HL  = 0x8E,
+    BB_OP_ADC_A_A   = 0x8F,
+    BB_OP_ADC_A_N   = 0xCE,
+
+    BB_OP_HALT      = 0x76,
+
 } bb_op_code_t;
 
 typedef enum {
@@ -64,10 +73,6 @@ typedef struct bb_reg_s
              *    bit 4: carry */
             uint8_t a, f, b, c, d, e, h, l;
         };
-        struct
-        {
-            uint16_t af, bc, de, hl;
-        };
         uint8_t arr[8];
     };
 } bb_reg_t;
@@ -75,9 +80,10 @@ typedef struct bb_reg_s
 typedef struct bb_state_s
 {
     bb_reg_t reg;
-    uint8_t rom[BB_MAX_ROM_SIZE];
-    uint8_t ram[BB_MAX_RAM_SIZE];
+    uint8_t* rom;
+    uint8_t* ram;
     int pc; /**< program counter */
+    int sp; /**< stack pointer */
 } bb_state_t;
 
 /******************************************************************************
