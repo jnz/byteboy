@@ -37,7 +37,7 @@
  * FUNCTION BODIES
  ******************************************************************************/
 
-static inline void bb_add(bb_state_t* bb, uint8_t a, uint8_t b)
+static inline void bb_add(bb_state_t* bb, int a, int b)
 {
     int result = a + b;
     bb->reg.a = (uint8_t)(result & 0xff);
@@ -70,7 +70,7 @@ static inline void bb_add(bb_state_t* bb, uint8_t a, uint8_t b)
     bb->reg.f &= ~BB_SUBTRACT_FLAG;
 }
 
-static inline void bb_add_carry(bb_state_t* bb, uint8_t a, uint8_t b)
+static inline void bb_add_carry(bb_state_t* bb, int a, int b)
 {
     bb_add(bb, a, b + ((bb->reg.f & BB_CARRY_FLAG) ? 1 : 0));
 }
@@ -260,12 +260,47 @@ void bb_vm(bb_state_t* bb)
             bb->pc = ((bb->reg.h << 8) | bb->reg.l) & BB_RAM_MASK;
             break;
 
+        /* -- CP --------------------------------------------- */
+        case BB_OP_CP_A_B:
+        case BB_OP_CP_A_C:
+        case BB_OP_CP_A_D:
+        case BB_OP_CP_A_E:
+        case BB_OP_CP_A_H:
+        case BB_OP_CP_A_L:
+            {
+                const uint8_t save = bb->reg.a;
+                const int offset =  code[bb->pc-1] - BB_OP_CP_A_B;
+                bb_add(bb, bb->reg.a, -bb->reg.arr[offset]);
+                bb->reg.a = save;
+            }
+            break;
+        case BB_OP_CP_A_HL:
+            {
+                const uint8_t save = bb->reg.a;
+                bb_add(bb, bb->reg.a, -ram[((bb->reg.h << 8) | bb->reg.l) & BB_RAM_MASK]);
+                bb->reg.a = save;
+            }
+            break;
+        case BB_OP_CP_A_A:
+            bb->reg.f = BB_ZERO_FLAG | BB_SUBTRACT_FLAG;
+            break;
+        case BB_OP_CP_A_N:
+            {
+                const uint8_t save = bb->reg.a;
+                bb_add(bb, bb->reg.a, -code[bb->pc++]);
+                bb->reg.a = save;
+            }
+            break;
+
         /* -- PREFIX ----------------------------------------- */
         case BB_OP_PREFIX:
             assert(0);
             break;
 
         /* -- OTHER ------------------------------------------ */
+        case BB_OP_CCF: /* FLIP CARRY BIT */
+            bb->reg.f ^= BB_CARRY_FLAG;
+            break;
         case BB_OP_HALT:
             run = 0;
             break;

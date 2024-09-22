@@ -76,6 +76,18 @@ typedef enum {
     BB_OP_CALL_NC   = 0xD4,
     BB_OP_CALL_C    = 0xDC,
 
+    BB_OP_CCF       = 0x3F, // COMPLEMENT CARRY
+
+    BB_OP_CP_A_B    = 0xB8,
+    BB_OP_CP_A_C    = 0xB9,
+    BB_OP_CP_A_D    = 0xBA,
+    BB_OP_CP_A_E    = 0xBB,
+    BB_OP_CP_A_H    = 0xBC,
+    BB_OP_CP_A_L    = 0xBD,
+    BB_OP_CP_A_HL   = 0xBE,
+    BB_OP_CP_A_A    = 0xBF,
+    BB_OP_CP_A_N    = 0xFE,
+
     BB_OP_HALT      = 0x76,
 
 } bb_op_code_t;
@@ -97,7 +109,7 @@ typedef struct bb_reg_s
              *    bit 6: subtraction.
              *    bit 5: half carry
              *    bit 4: carry */
-            uint8_t a, f, b, c, d, e, h, l;
+            uint8_t b, c, d, e, h, l, a, f;
         };
         uint8_t arr[8];
     };
