@@ -45,34 +45,34 @@ static inline void bb_add(bb_state_t* bb, int a, int b)
     // ZERO FLAG
     if (result == 0)
     {
-        bb->reg.f |= BB_ZERO_FLAG;
+        bb->reg.f |= BB_FLAG_ZERO;
     }
     else
     {
-        bb->reg.f &= ~BB_ZERO_FLAG;
+        bb->reg.f &= ~BB_FLAG_ZERO;
     }
     if (result > 0xFF)
     {
-        bb->reg.f |= BB_CARRY_FLAG;
+        bb->reg.f |= BB_FLAG_CARRY;
     }
     else
     {
-        bb->reg.f &= ~BB_CARRY_FLAG;
+        bb->reg.f &= ~BB_FLAG_CARRY;
     }
     if ((bb->reg.a & 0xF) + (b & 0xF) > 0xF)
     {
-        bb->reg.f |= BB_HALF_CARRY_FLAG;
+        bb->reg.f |= BB_FLAG_HALF_CARRY;
     }
     else
     {
-        bb->reg.f &= ~BB_HALF_CARRY_FLAG;
+        bb->reg.f &= ~BB_FLAG_HALF_CARRY;
     }
-    bb->reg.f &= ~BB_SUBTRACT_FLAG;
+    bb->reg.f &= ~BB_FLAG_SUBTRACT;
 }
 
 static inline void bb_add_carry(bb_state_t* bb, int a, int b)
 {
-    bb_add(bb, a, b + ((bb->reg.f & BB_CARRY_FLAG) ? 1 : 0));
+    bb_add(bb, a, b + ((bb->reg.f & BB_FLAG_CARRY) ? 1 : 0));
 }
 
 static inline void bb_and(bb_state_t* bb, uint8_t a, uint8_t b)
@@ -83,15 +83,15 @@ static inline void bb_and(bb_state_t* bb, uint8_t a, uint8_t b)
     // ZERO FLAG
     if (result == 0)
     {
-        bb->reg.f |= BB_ZERO_FLAG;
+        bb->reg.f |= BB_FLAG_ZERO;
     }
     else
     {
-        bb->reg.f &= ~BB_ZERO_FLAG;
+        bb->reg.f &= ~BB_FLAG_ZERO;
     }
-    bb->reg.f &= ~BB_CARRY_FLAG;
-    bb->reg.f |=  BB_HALF_CARRY_FLAG; // always set to 1 for some reason
-    bb->reg.f &= ~BB_SUBTRACT_FLAG;
+    bb->reg.f &= ~BB_FLAG_CARRY;
+    bb->reg.f |=  BB_FLAG_HALF_CARRY; // always set to 1 for some reason
+    bb->reg.f &= ~BB_FLAG_SUBTRACT;
 }
 
 static inline void bb_daa(bb_state_t* bb)
@@ -99,37 +99,37 @@ static inline void bb_daa(bb_state_t* bb)
     uint8_t correction = 0;
 
     // Check if the previous operation was a subtraction
-    if (!(bb->reg.f & BB_SUBTRACT_FLAG)) // BB_SUBTRACT_FLAG == 0 means addition
+    if (!(bb->reg.f & BB_FLAG_SUBTRACT)) // BB_FLAG_SUBTRACT == 0 means addition
     {
-        if ((bb->reg.f & BB_CARRY_FLAG) || bb->reg.a > 0x99)
+        if ((bb->reg.f & BB_FLAG_CARRY) || bb->reg.a > 0x99)
         {
             correction |= 0x60;
-            bb->reg.f |= BB_CARRY_FLAG;
+            bb->reg.f |= BB_FLAG_CARRY;
         }
-        if ((bb->reg.f & BB_HALF_CARRY_FLAG) || (bb->reg.a & 0x0F) > 0x09)
+        if ((bb->reg.f & BB_FLAG_HALF_CARRY) || (bb->reg.a & 0x0F) > 0x09)
         {
             correction |= 0x06;
         }
     }
     else
     {
-        if (bb->reg.f & BB_CARRY_FLAG)
+        if (bb->reg.f & BB_FLAG_CARRY)
         {
             correction |= 0x60;
         }
-        if (bb->reg.f & BB_HALF_CARRY_FLAG)
+        if (bb->reg.f & BB_FLAG_HALF_CARRY)
         {
             correction |= 0x06;
         }
     }
 
     // Apply the correction
-    bb->reg.a += (bb->reg.f & BB_SUBTRACT_FLAG) ? -correction : correction;
+    bb->reg.a += (bb->reg.f & BB_FLAG_SUBTRACT) ? -correction : correction;
 
     // Set Zero flag if A is zero
-    bb->reg.f = (bb->reg.a == 0) ? (bb->reg.f | BB_ZERO_FLAG) : (bb->reg.f & ~BB_ZERO_FLAG);
+    bb->reg.f = (bb->reg.a == 0) ? (bb->reg.f | BB_FLAG_ZERO) : (bb->reg.f & ~BB_FLAG_ZERO);
 
-    bb->reg.f &= ~BB_HALF_CARRY_FLAG; // Half carry flag should be cleared
+    bb->reg.f &= ~BB_FLAG_HALF_CARRY; // Half carry flag should be cleared
 }
 
 void bb_vm(bb_state_t* bb)
@@ -231,7 +231,7 @@ void bb_vm(bb_state_t* bb)
 
         /* -- JUMP ------------------------------------------- */
         case BB_OP_CALL_NZ:
-            if (!(bb->reg.f & BB_ZERO_FLAG))
+            if (!(bb->reg.f & BB_FLAG_ZERO))
             {
                 ram[--bb->sp] = bb->pc & 0xff;
                 ram[--bb->sp] = (bb->pc >> 8) & 0xff;
@@ -239,7 +239,7 @@ void bb_vm(bb_state_t* bb)
             }
             break;
         case BB_OP_JP_NZ:
-            if (!(bb->reg.f & BB_ZERO_FLAG))
+            if (!(bb->reg.f & BB_FLAG_ZERO))
             {
                 bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
             }
@@ -253,7 +253,7 @@ void bb_vm(bb_state_t* bb)
             bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
             break;
         case BB_OP_CALL_Z:
-            if (bb->reg.f & BB_ZERO_FLAG)
+            if (bb->reg.f & BB_FLAG_ZERO)
             {
                 ram[--bb->sp] = bb->pc & 0xff;
                 ram[--bb->sp] = (bb->pc >> 8) & 0xff;
@@ -261,13 +261,13 @@ void bb_vm(bb_state_t* bb)
             }
             break;
         case BB_OP_JP_Z:
-            if (bb->reg.f & BB_ZERO_FLAG)
+            if (bb->reg.f & BB_FLAG_ZERO)
             {
                 bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
             }
             break;
         case BB_OP_CALL_NC:
-            if (!(bb->reg.f & BB_CARRY_FLAG))
+            if (!(bb->reg.f & BB_FLAG_CARRY))
             {
                 ram[--bb->sp] = bb->pc & 0xff;
                 ram[--bb->sp] = (bb->pc >> 8) & 0xff;
@@ -275,13 +275,13 @@ void bb_vm(bb_state_t* bb)
             }
             break;
         case BB_OP_JP_NC:
-            if (!(bb->reg.f & BB_CARRY_FLAG))
+            if (!(bb->reg.f & BB_FLAG_CARRY))
             {
                 bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
             }
             break;
         case BB_OP_CALL_C:
-            if (bb->reg.f & BB_CARRY_FLAG)
+            if (bb->reg.f & BB_FLAG_CARRY)
             {
                 ram[--bb->sp] = bb->pc & 0xff;
                 ram[--bb->sp] = (bb->pc >> 8) & 0xff;
@@ -289,7 +289,7 @@ void bb_vm(bb_state_t* bb)
             }
             break;
         case BB_OP_JP_C:
-            if (bb->reg.f & BB_CARRY_FLAG)
+            if (bb->reg.f & BB_FLAG_CARRY)
             {
                 bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
             }
@@ -307,7 +307,7 @@ void bb_vm(bb_state_t* bb)
         case BB_OP_CP_A_L:
             {
                 const uint8_t save = bb->reg.a;
-                const int offset =  code[bb->pc-1] - BB_OP_CP_A_B;
+                const int offset = code[bb->pc-1] - BB_OP_CP_A_B;
                 bb_add(bb, bb->reg.a, -bb->reg.arr[offset]);
                 bb->reg.a = save;
             }
@@ -320,7 +320,7 @@ void bb_vm(bb_state_t* bb)
             }
             break;
         case BB_OP_CP_A_A:
-            bb->reg.f = BB_ZERO_FLAG | BB_SUBTRACT_FLAG;
+            bb->reg.f = BB_FLAG_ZERO | BB_FLAG_SUBTRACT;
             break;
         case BB_OP_CP_A_N:
             {
@@ -328,6 +328,71 @@ void bb_vm(bb_state_t* bb)
                 bb_add(bb, bb->reg.a, -code[bb->pc++]);
                 bb->reg.a = save;
             }
+            break;
+        /* -- INC -------------------------------------------- */
+        // case BB_OP_INC_BC:
+        //     break;
+        // case BB_OP_INC_DE:
+        //     break;
+        // case BB_OP_INC_HL:
+        //     break;
+        case BB_OP_INC_B:
+        case BB_OP_INC_C:
+        case BB_OP_INC_D:
+        case BB_OP_INC_E:
+        case BB_OP_INC_H:
+        case BB_OP_INC_L:
+            {
+                const int offset = (code[bb->pc-1] - BB_OP_INC_B)/8;
+                if ((bb->reg.arr[offset] & 0xF) + 1 > 0xF)
+                {
+                    bb->reg.f |= BB_FLAG_HALF_CARRY;
+                }
+                else
+                {
+                    bb->reg.f &= ~BB_FLAG_HALF_CARRY;
+                }
+                bb->reg.arr[offset]++;
+                if (bb->reg.arr[offset] == 0)
+                {
+                    bb->reg.f |= BB_FLAG_ZERO;
+                }
+                else
+                {
+                    bb->reg.f &= ~BB_FLAG_ZERO;
+                }
+                bb->reg.f &= ~BB_FLAG_SUBTRACT;
+            }
+            break;
+        case BB_OP_INC_SP:
+            bb->sp++;
+            break;
+        // case BB_OP_INC_HL_P:
+        //     break;
+        // case BB_OP_INC_A:
+        //     break;
+
+        /* -- LOAD ------------------------------------------- */
+        case BB_LD_BC:
+            bb->reg.c = code[bb->pc++]; // load lo byte into C
+            bb->reg.b = code[bb->pc++]; // load hi byte into B
+            break;
+        case BB_LD_BC_A:
+            ram[((bb->reg.b << 8) | bb->reg.c)&BB_RAM_MASK] = bb->reg.a;
+            break;
+        case BB_LD_B:
+            bb->reg.b = code[bb->pc++]; // load constant into b
+            break;
+        case BB_LD_N16_SP:
+            ram[ (code[bb->pc+1]<<8 | code[bb->pc] + 0)&BB_RAM_MASK ] = (bb->sp     ) & 0xFF;
+            ram[ (code[bb->pc+1]<<8 | code[bb->pc] + 1)&BB_RAM_MASK ] = (bb->sp >> 8) & 0xFF;
+            bb->pc+=2;
+            break;
+        case BB_LD_A_BC:
+            bb->reg.a = ram[ ((bb->reg.b << 8) | bb->reg.c )&BB_RAM_MASK ];
+            break;
+        case BB_LD_H_N:
+            bb->reg.h = code[bb->pc++];
             break;
 
         /* -- PREFIX ----------------------------------------- */
@@ -337,15 +402,15 @@ void bb_vm(bb_state_t* bb)
 
         /* -- OTHER ------------------------------------------ */
         case BB_OP_CCF: /* FLIP CARRY BIT */
-            bb->reg.f ^= BB_CARRY_FLAG;
+            bb->reg.f ^= BB_FLAG_CARRY;
             break;
         case BB_OP_DAA:
             bb_daa(bb);
             break;
         case BB_OP_CPL:
             bb->reg.a = ~bb->reg.a;
-            bb->reg.f |= BB_HALF_CARRY_FLAG;
-            bb->reg.f |= BB_SUBTRACT_FLAG;
+            bb->reg.f |= BB_FLAG_HALF_CARRY;
+            bb->reg.f |= BB_FLAG_SUBTRACT;
             break;
         case BB_OP_HALT:
             run = 0;

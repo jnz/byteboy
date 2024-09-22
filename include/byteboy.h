@@ -29,6 +29,8 @@
  ******************************************************************************/
 
 /* Source: https://rgbds.gbdev.io/docs/v0.8.0/gbz80.7 */
+/* https://gbdev.io/gb-opcodes/optables/ */
+/* https://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html */
 
 typedef enum {
     BB_OP_PREFIX    = 0xCB,
@@ -91,15 +93,36 @@ typedef enum {
     BB_OP_CPL       = 0x2F,
     BB_OP_DAA       = 0x27,
 
+    BB_OP_INC_BC    = 0x03,
+    BB_OP_INC_B     = 0x04,
+    BB_OP_INC_C     = 0x0C,
+    BB_OP_INC_DE    = 0x13,
+    BB_OP_INC_D     = 0x14,
+    BB_OP_INC_E     = 0x1C,
+    BB_OP_INC_HL    = 0x23,
+    BB_OP_INC_H     = 0x24,
+    BB_OP_INC_L     = 0x2C,
+    BB_OP_INC_SP    = 0x33,
+    BB_OP_INC_HL_P  = 0x34, // increment mem HL is pointing at
+    BB_OP_INC_A     = 0x3C,
+
+    BB_LD_BC        = 0x01,
+    BB_LD_BC_A      = 0x02, // Store value in register A into the byte pointed to by register BC.
+    BB_LD_B         = 0x06,
+    BB_LD_N16_SP    = 0x08, // LD (a16),SP, store value of SP into mem location specified by next two bytes
+    BB_LD_A_BC      = 0x0A,
+
+    BB_LD_H_N       = 0x26, // LD H, n8
+
     BB_OP_HALT      = 0x76,
 
 } bb_op_code_t;
 
 typedef enum {
-    BB_CARRY_FLAG      = 0x10,
-    BB_HALF_CARRY_FLAG = 0x20,
-    BB_SUBTRACT_FLAG   = 0x40,
-    BB_ZERO_FLAG       = 0x80,
+    BB_FLAG_CARRY      = 0x10,
+    BB_FLAG_HALF_CARRY = 0x20,
+    BB_FLAG_SUBTRACT   = 0x40,
+    BB_FLAG_ZERO       = 0x80,
 } bb_flags_t;
 
 typedef struct bb_reg_s
@@ -112,7 +135,7 @@ typedef struct bb_reg_s
              *    bit 6: subtraction.
              *    bit 5: half carry
              *    bit 4: carry */
-            uint8_t b, c, d, e, h, l, a, f;
+            uint8_t b, c, d, e, h, l, a, f; /* don't change the order */
         };
         uint8_t arr[8];
     };
