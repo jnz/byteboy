@@ -21,7 +21,8 @@
  * DEFINES
  ******************************************************************************/
 
-#define BB_MEM_MASK            0xFFFF
+#define BB_RAM_MASK            0xFFFF
+#define BB_ROM_MASK            0xFFFF
 
 /******************************************************************************
  * TYPEDEFS
@@ -30,6 +31,8 @@
 /* Source: https://rgbds.gbdev.io/docs/v0.8.0/gbz80.7 */
 
 typedef enum {
+    BB_OP_PREFIX    = 0xCB,
+
     BB_OP_ADD_A_B   = 0x80, // 128
     BB_OP_ADD_A_C   = 0x81, // 129
     BB_OP_ADD_A_D   = 0x82, // 130
@@ -59,6 +62,19 @@ typedef enum {
     BB_OP_AND_A_HL  = 0xA6,
     BB_OP_AND_A_A   = 0xA7,
     BB_OP_AND_A_N   = 0xE6,
+
+    BB_OP_JP_NZ     = 0xC2,
+    BB_OP_JP        = 0xC3,
+    BB_OP_JP_Z      = 0xCA,
+    BB_OP_JP_NC     = 0xD2, // JUMP NOT CARRY
+    BB_OP_JP_C      = 0xDA, // JUMP CARRY
+    BB_OP_JP_HL     = 0xE9,
+
+    BB_OP_CALL_NZ   = 0xC4,
+    BB_OP_CALL_Z    = 0xCC,
+    BB_OP_CALL      = 0xCD,
+    BB_OP_CALL_NC   = 0xD4,
+    BB_OP_CALL_C    = 0xDC,
 
     BB_OP_HALT      = 0x76,
 

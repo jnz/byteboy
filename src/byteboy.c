@@ -127,7 +127,7 @@ void bb_vm(bb_state_t* bb)
             bb_add(bb, bb->reg.a, bb->reg.l);
             break;
         case BB_OP_ADD_A_HL:
-            bb_add(bb, bb->reg.a, ram[((bb->reg.h << 8) | bb->reg.l) & BB_MEM_MASK]);
+            bb_add(bb, bb->reg.a, ram[((bb->reg.h << 8) | bb->reg.l) & BB_RAM_MASK]);
             break;
         case BB_OP_ADD_A_N:
             bb_add(bb, bb->reg.a, code[bb->pc++]);
@@ -156,7 +156,7 @@ void bb_vm(bb_state_t* bb)
             bb_add_carry(bb, bb->reg.a, bb->reg.l);
             break;
         case BB_OP_ADC_A_HL:
-            bb_add_carry(bb, bb->reg.a, ram[((bb->reg.h << 8) | bb->reg.l) & BB_MEM_MASK]);
+            bb_add_carry(bb, bb->reg.a, ram[((bb->reg.h << 8) | bb->reg.l) & BB_RAM_MASK]);
             break;
         case BB_OP_ADC_A_N:
             bb_add_carry(bb, bb->reg.a, code[bb->pc++]);
@@ -185,12 +185,87 @@ void bb_vm(bb_state_t* bb)
             bb_and(bb, bb->reg.a, bb->reg.l);
             break;
         case BB_OP_AND_A_HL:
-            bb_and(bb, bb->reg.a, ram[((bb->reg.h << 8) | bb->reg.l) & BB_MEM_MASK]);
+            bb_and(bb, bb->reg.a, ram[((bb->reg.h << 8) | bb->reg.l) & BB_RAM_MASK]);
             break;
         case BB_OP_AND_A_N:
             bb_and(bb, bb->reg.a, code[bb->pc++]);
             break;
 
+        /* -- JUMP ------------------------------------------- */
+        case BB_OP_CALL_NZ:
+            if (!(bb->reg.f & BB_ZERO_FLAG))
+            {
+                ram[--bb->sp] = bb->pc & 0xff;
+                ram[--bb->sp] = (bb->pc >> 8) & 0xff;
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_JP_NZ:
+            if (!(bb->reg.f & BB_ZERO_FLAG))
+            {
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_CALL:
+            ram[--bb->sp] = bb->pc & 0xff;
+            ram[--bb->sp] = (bb->pc >> 8) & 0xff;
+            bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            break; /* could be done with fall-through here */
+        case BB_OP_JP:
+            bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            break;
+        case BB_OP_CALL_Z:
+            if (bb->reg.f & BB_ZERO_FLAG)
+            {
+                ram[--bb->sp] = bb->pc & 0xff;
+                ram[--bb->sp] = (bb->pc >> 8) & 0xff;
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_JP_Z:
+            if (bb->reg.f & BB_ZERO_FLAG)
+            {
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_CALL_NC:
+            if (!(bb->reg.f & BB_CARRY_FLAG))
+            {
+                ram[--bb->sp] = bb->pc & 0xff;
+                ram[--bb->sp] = (bb->pc >> 8) & 0xff;
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_JP_NC:
+            if (!(bb->reg.f & BB_CARRY_FLAG))
+            {
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_CALL_C:
+            if (bb->reg.f & BB_CARRY_FLAG)
+            {
+                ram[--bb->sp] = bb->pc & 0xff;
+                ram[--bb->sp] = (bb->pc >> 8) & 0xff;
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_JP_C:
+            if (bb->reg.f & BB_CARRY_FLAG)
+            {
+                bb->pc = ((code[bb->pc+1] << 8) | code[bb->pc]) & BB_ROM_MASK;
+            }
+            break;
+        case BB_OP_JP_HL:
+            bb->pc = ((bb->reg.h << 8) | bb->reg.l) & BB_RAM_MASK;
+            break;
+
+        /* -- PREFIX ----------------------------------------- */
+        case BB_OP_PREFIX:
+            assert(0);
+            break;
+
+        /* -- OTHER ------------------------------------------ */
         case BB_OP_HALT:
             run = 0;
             break;
@@ -208,6 +283,7 @@ int main(int argc, char** argv)
 
     bb.rom = code;
     bb.ram = ram;
+    bb.sp = sizeof(ram)-1;
 
     bb.reg.a = 0x0E;
     ram[0x30] = 0x06;
